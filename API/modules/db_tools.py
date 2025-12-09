@@ -16,21 +16,44 @@ def write_db(engine):
     return Session
 
 def read_db(session):
-    content = session.execute(select(Quote)).scalars().all()
-    quotes = [{'id': row.id,'text': row.text } for row in content]
-    return quotes
+    try:
+        content = session.execute(select(Quote)).scalars().all()
+        quotes = [{'id': row.id,'text': row.text } for row in content]
+        logger.success(f"Successfully read from database")
+        return quotes
+    except Exception as e:
+        logger.error(f"Failed to add row with error: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
 
 def read_id_db(session):
-    content = session.execute(select(Quote.id)).scalars().all()
-    quotes = [{'id': row} for row in content]
-    return quotes
+    try:
+        content = session.execute(select(Quote.id)).scalars().all()
+        quotes = [{'id': row} for row in content]
+        logger.success(f"Successfully read id from database")
+        return quotes
+    except Exception as e:
+        logger.error(f"Failed to add row with error: {e}")
+        session.rollback()
+    finally:
+        session.close()
 
 def add_row_db(session, quote):
-    new_quote = Quote(text=quote)
-    session.add(new_quote)
-    session.commit()
-    injected_quote = session.query(Quote).filter_by(text=quote).first()
-    return {'id' : injected_quote.id, 'text' : injected_quote.text}
+    try:
+        new_quote = Quote(text=quote)
+        session.add(new_quote)
+        session.commit()
+        injected_quote = session.query(Quote).filter_by(text=quote).first()
+        quote_object  = {'id' : injected_quote.id, 'text' : injected_quote.text}
+        logger.success(f"Successfully added data : {quote_object} to database")
+        return quote_object
+    except Exception as e:
+        logger.error(f"Failed to add row with error: {e}")
+        session.rollback()
+    finally:
+        session.close()
 
 def initialize_db():
     engine = create_engine("sqlite:///API/data/quotes_db.db", echo=True)

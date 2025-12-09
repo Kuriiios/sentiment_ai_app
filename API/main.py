@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, StringConstraints, Field
 from modules.db_tools import read_db, read_id_db, write_db, initialize_db, add_row_db
 from typing import List
+import requests
 import random 
 load_dotenv()
 
@@ -30,7 +31,7 @@ app = FastAPI(title="API")
 
 PATH = "API/logs/main.log"
 logger.remove()
-logger.add(sink=PATH)
+logger.add(sink=PATH, rotation="500 MB", level="INFO")
 
 @app.get("/")
 def read_root():
@@ -42,10 +43,13 @@ def insert_quote(quote : QuoteRequest):
     try:
         session = Session()
         new_row =  add_row_db(session, quote.text)
+        logger.info(f"Successfully inserted {new_row} into database")
         return new_row
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         session.rollback()
-        logger.error(f"Insertion failed with error: {e}")
+        logger.error(f"Erreur de connexion à l'API : {e}")
+    except Exception as e :
+        logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(
             status_code=400,
             detail="The server cannot or will not process the request due to an apparent client error "
@@ -59,10 +63,13 @@ def read_all_quotes():
     try:
         session = Session()
         df = pd.DataFrame(read_db(session))
+        logger.info('Read data from database')
         return df.reset_index().rename(columns={'id':'id','text':'text'}).to_dict('records')
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         session.rollback()
-        logger.error(f"Reading db failed with error: {e}")
+        logger.error(f"Erreur de connexion à l'API : {e}")
+    except Exception as e :
+        logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(
             status_code=500,
             detail="An unexpected condition was encountered"
@@ -75,10 +82,13 @@ def read_all_quotes_id():
     try:
         session = Session()
         df = pd.DataFrame(read_id_db(session))
+        logger.info('Read ids from database')
         return df.reset_index().rename(columns={'id':'id'}).to_dict('records')
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         session.rollback()
-        logger.error(f"Reading ids failed with error: {e}")
+        logger.error(f"Erreur de connexion à l'API : {e}")
+    except Exception as e :
+        logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(
             status_code=500,
             detail="An unexpected condition was encountered"
@@ -101,10 +111,13 @@ def read_quote(id:int):
         quote_data = df.loc[loc].to_dict()
         quote_data['id'] = id
         # return result
+        logger.info(f'Read data from id:{id} from database')
         return quote_data
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         session.rollback()
-        logger.error(f"Reading specific id failed with error: {e}")
+        logger.error(f"Erreur de connexion à l'API : {e}")
+    except Exception as e :
+        logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(
             status_code=500,
             detail="An unexpected condition was encountered"
@@ -115,22 +128,20 @@ def read_quote(id:int):
 @app.get("/read/random/", response_model=QuoteResponse)
 def read_random_quotes():
     try:
-        # get all quotes
         session = Session()
-
         df = pd.DataFrame(read_db(session))
-        
-        # filter by id
         if df.empty:
             raise HTTPException (status_code=404, detail=f'Dataframe {df} not found')
         random_id = random.choice(df.index)
         quote_data = df.loc[random_id].to_dict()
         quote_data['id'] = random_id
-        # return result
+        logger.info(f'Read data from id:{random_id} from database')
         return quote_data
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         session.rollback()
-        logger.error(f"Reading specific id failed with error: {e}")
+        logger.error(f"Erreur de connexion à l'API : {e}")
+    except Exception as e :
+        logger.error(f"Une erreur est survenue: {e}")
         raise HTTPException(
             status_code=500,
             detail="An unexpected condition was encountered"
@@ -139,7 +150,6 @@ def read_random_quotes():
         session.close()
 
 if __name__ == "__main__":
-    # 1 - on récupère le port de l'API
     try:
         print("Hello")
         port = os.getenv('FAST_API_PORT')
@@ -150,7 +160,6 @@ if __name__ == "__main__":
         print("ERREUR")
         port = 8080
 
-    # 2 - On lance uvicorn
     uvicorn.run(
         "main:app", 
         host = url,

@@ -1,5 +1,5 @@
 # API/sentiment_api.py
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import uvicorn
 from nltk.sentiment import SentimentIntensityAnalyzer
 from pydantic import BaseModel
@@ -18,7 +18,7 @@ app = FastAPI(title='sentiment_app')
 
 PATH = "API_IA/logs/sentiment_api.log"
 logger.remove()
-logger.add(sink=PATH)
+logger.add(sink=PATH, rotation="500 MB", level="INFO")
 
 @app.get("/")
 def read_root():
@@ -29,15 +29,15 @@ def analyse_sentiment(text:TextSentiment):
     try:
         sia = SentimentIntensityAnalyzer()
         sentiment = sia.polarity_scores(text.text)
-        logger.success(f'Analyze done on :{text.text}')
+        logger.info(f"Résultats: {sentiment}")
         return sentiment
     except Exception as e:
-        logger.error(f'Analyze failed on :{text.text} due to errror {e}')
+        logger.error(f"Erreur lors de l'analyse: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 #SETUP UVICORN
 if __name__ == "__main__":
-    # 1 - on récupère le port de l'API
     try:
         print("Hello")
         port = os.getenv('FAST_API_AI_PORT')

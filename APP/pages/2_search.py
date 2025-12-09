@@ -3,6 +3,7 @@ import streamlit as st
 import requests 
 import os 
 import pandas as pd
+from loguru import logger
 from dotenv import load_dotenv 
 
 load_dotenv()
@@ -10,6 +11,10 @@ load_dotenv()
 API_ROOT_URL =  f"http://{os.getenv('API_BASE_URL')}:{os.getenv('FAST_API_PORT', '8080')}"
 API_AI_ROOT_URL =  f"http://{os.getenv('API_AI_BASE_URL')}:{os.getenv('FAST_API_AI_PORT', '8080')}"
 API_URL =  API_ROOT_URL + "/read"
+
+PATH = "APP/logs/streamlit_sentiment_api.log"
+logger.remove()
+logger.add(sink=PATH, rotation="500 MB", level="INFO")
 
 st.title("Read a quote")
 
@@ -110,7 +115,15 @@ if analyse:
     if response.status_code == 200:
         result = response.json()
         st.success(f"Quote with ID {result_quote.get('id', 'N/A')} has been analyze and it's sentiment is :")
-        st.info(result.get('neg', 'text non trouvé'))
-        st.info(result.get('neu', 'text non trouvé'))
-        st.info(result.get('pos', 'text non trouvé'))
-        st.info(result.get('compound', 'text non trouvé'))
+        st.write("Résultats de l'analyse :")
+        st.write(f"Polarité négative : {result.get('neg')}")
+        st.write(f"Polarité neutre : {result.get('neu')}")
+        st.write(f"Polarité positive : {result.get('pos')}")
+        st.write(f"Score composé : {result.get('compound')}")
+        if result.get('compound') >= 0.05 :
+            st.write("Sentiment global : Positif 😀")
+        elif result.get('compound') <= -0.05 :
+            st.write("Sentiment global : Négatif 🙁")
+        else :
+            st.write("Sentiment global : Neutre 😐")
+            logger.info(f"Résultats affichés: {result}")
