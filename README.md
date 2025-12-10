@@ -36,6 +36,10 @@ mon_projet/
 │       └── 2_search.py
 ├── DEV
 │   └── dev.ipynb
+├── tests
+│   ├── test_backend_api.py
+│   ├── test_backend_orm.py
+│   └── test_initiation.py
 ├── README.md
 ├── .env
 ├── .venv
