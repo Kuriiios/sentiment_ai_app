@@ -21,7 +21,13 @@ def read_db():
         quotes = [{'id': row.id,'text': row.text } for row in content]
         return quotes
 
-def read_id_db():
+def read_id_db(id):
+    with get_db_session() as session:
+        content = session.execute(select(Quote).filter_by(id = id)).scalars().first()
+        quotes = {'id': content.id,'text': content.text}
+        return quotes
+
+def read_ids_db():
     with get_db_session() as session:
         content = session.execute(select(Quote.id)).scalars().all()
         quotes = [{'id': row} for row in content]

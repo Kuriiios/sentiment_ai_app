@@ -23,13 +23,6 @@ def setup_db(engine_test):
     yield
     Base.metadata.drop_all(engine_test)
 
-## Insert into DB
-@pytest.fixture(scope="module")
-def setup_db(engine_test):
-    Base.metadata.create_all(engine_test)
-    yield
-    Base.metadata.drop_all(engine_test)
-
 ## create DB Session
 @pytest.fixture(scope="function")
 def db_session(engine_test, setup_db):

@@ -103,27 +103,31 @@ match mode:
             st.error(f"ERREUR : Impossible de se connecter à l'API à {API_URL}")
             st.warning("Veuillez vous assurer que le serveur Uvicorn est bien lancé en arrière-plan.")
             
-analyse = st.button('Analyse')
 
-if analyse:
-    result_quote = st.session_state['api_result'] 
-    API_AI_URL = API_AI_ROOT_URL + '/analyse_sentiment/'
+if st.session_state['api_result']:
 
-    to_analyse = {'text':result_quote.get('text', 'text non trouvé')}
+    analyse = st.button('Analyse')
 
-    response = requests.post(url=API_AI_URL, json=to_analyse)
-    if response.status_code == 200:
-        result = response.json()
-        st.success(f"Quote with ID {result_quote.get('id', 'N/A')} has been analyze and it's sentiment is :")
-        st.write("Résultats de l'analyse :")
-        st.write(f"Polarité négative : {result.get('neg')}")
-        st.write(f"Polarité neutre : {result.get('neu')}")
-        st.write(f"Polarité positive : {result.get('pos')}")
-        st.write(f"Score composé : {result.get('compound')}")
-        if result.get('compound') >= 0.05 :
-            st.write("Sentiment global : Positif 😀")
-        elif result.get('compound') <= -0.05 :
-            st.write("Sentiment global : Négatif 🙁")
-        else :
-            st.write("Sentiment global : Neutre 😐")
-            logger.info(f"Résultats affichés: {result}")
+    if analyse:
+        result_quote = st.session_state['api_result']
+        API_AI_URL = API_AI_ROOT_URL + '/analyse_sentiment/'
+
+        text_sentiment = {'text':result_quote.get('text')}
+        # to_analyse = {'text':result_quote.get('text', 'text non trouvé')}
+
+        response = requests.post(url=API_AI_URL, json=text_sentiment)
+        if response.status_code == 200:
+            result = response.json()
+            st.success(f"Quote with ID {result_quote.get('id', 'N/A')} has been analyze and it's sentiment is :")
+            st.write("Résultats de l'analyse :")
+            st.write(f"Polarité négative : {result.get('neg')}")
+            st.write(f"Polarité neutre : {result.get('neu')}")
+            st.write(f"Polarité positive : {result.get('pos')}")
+            st.write(f"Score composé : {result.get('compound')}")
+            if result.get('compound') >= 0.05 :
+                st.write("Sentiment global : Positif 😀")
+            elif result.get('compound') <= -0.05 :
+                st.write("Sentiment global : Négatif 🙁")
+            else :
+                st.write("Sentiment global : Neutre 😐")
+                logger.info(f"Résultats affichés: {result}")

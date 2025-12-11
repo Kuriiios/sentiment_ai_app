@@ -1,4 +1,4 @@
-# API/main.py
+ # API/main.py
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from loguru import logger 
@@ -6,7 +6,7 @@ import pandas as pd
 from dotenv import load_dotenv 
 from pydantic import BaseModel, Field
 import os 
-from API.modules.db_tools import read_db, read_id_db, initialize_db, add_row_db
+from API.modules.db_tools import read_db, read_ids_db, initialize_db, add_row_db
 from typing import List
 import random 
 
@@ -56,7 +56,7 @@ def read_all_quotes():
 @app.get("/read_ids/", response_model=List[QuoteResponseId])
 def read_all_quotes_id():
     try:
-        df = pd.DataFrame(read_id_db())
+        df = pd.DataFrame(read_ids_db())
         return df.reset_index().rename(columns={'id':'id'}).to_dict('records')
     except Exception as e:
         logger.error(f"Reading ids failed with error: {e}")
